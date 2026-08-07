@@ -30,7 +30,6 @@ conn.commit()
 #Project_Funcions
 
 def add_expense():
-
     if title_entry.get() == "" or amount_entry.get() == "" or date_entry.get() == "" :
             CTkMessagebox(
                 title = "Missing information"
@@ -49,6 +48,28 @@ def add_expense():
             )
             return
 
+    title = title_entry.get()
+    amount = amount_entry.get()
+    category = category_combobox.get()
+    date = date_entry.get()
+
+    cursor.execute("""
+INSERT INTO expenses (title , amount , category , date)
+values(? , ? , ? , ?)
+""" , (title , amount , category , date))
+
+    conn.commit()
+
+    CTkMessagebox(
+        title = "Success" ,
+        message = "Expense added successfully!" ,
+        justify = "center"
+    )
+
+    title_entry.delete(0 , "end")
+    amount_entry.delete(0, "end")
+    date_entry.delete(0 , "end")
+    category_combobox.set("Select category")
 
 #Project_widgets
 
