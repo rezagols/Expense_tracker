@@ -1,2 +1,3 @@
-# Expence_tracker
-A simple expence tracker built with python , customtkinter 
+# Expense_tracker
+
+A simple expense tracker built with python , customtkinter
