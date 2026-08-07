@@ -9,45 +9,48 @@ root.title("Expense Tracker")
 
 root.geometry("400x600")
 
+#Project_database
+
+conn = sqlite3.connect("expense.db")
+
+cursor = conn.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS expenses (
+id INTEGER PRIMARY KEY AUTOINCREMENT ,
+title TEXT,
+amount REAL,
+category TEXT,
+date TEXT
+)
+""")
+
+conn.commit()
 
 #Project_Funcions
 
 def add_expense():
-    if title_entry.get() == "" and amount_entry.get() == "" and date_entry.get() == "" and category_combobox.get() == "Select Category":
+
+    if title_entry.get() == "" or amount_entry.get() == "" or date_entry.get() == "" :
             CTkMessagebox(
-                title = "Error"
-                ,message = "Please fill in all fields"
-                ,icon = "Cancel"
+                title = "Missing information"
+                , message = "Please fill in all fields"
+                , icon = "cancel"
+                , justify = "center"
             )
             return
-    if title_entry.get() == "":
-        CTkMessagebox(
-            title = "Error"
-            ,message = "Please fill the title!"
-            ,icon = "Cancel"
-        )
-        return
-    if amount_entry.get() == "":
-            CTkMessagebox(
-                title = "Error"
-                ,message = "Please fill the amount!"
-                ,icon = "Cancel"
-            )
-            return
+
     if category_combobox.get() == "Select category":
             CTkMessagebox(
-                title = "Error"
-                ,message = "Please select the category!"
-                ,icon = "Cancel"
+                title = "Missing information"
+                , message = "Please select the category!"
+                , icon = "cancel"
+                , justify = "center"
             )
             return
-    if date_entry.get() == "":
-            CTkMessagebox(
-                title = "Error"
-                ,message = "Please fill the date!"
-                ,icon = "Cancel"
-            )
-            return
+
+
+#Project_widgets
 
 title_label = ctk.CTkLabel(root , text = "Enter a title : ")
 title_entry = ctk.CTkEntry(root)
@@ -78,7 +81,8 @@ date_label.grid(row = 3 , column = 0 , padx = 10 , pady = 10)
 date_entry.grid(row = 3 , column = 1 , padx = 10 , pady = 10)
 
 
-
+add_button = ctk.CTkButton(root , text = "Add expense" , command = add_expense)
+add_button.grid(row = 4 , column = 1 , padx = 10 , pady = 10)
 
 
 root.mainloop()
