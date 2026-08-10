@@ -31,7 +31,7 @@ editing_expense_id = None
 #Project_Funcions
 
 def add_expense():
-    if title_entry.get() == "" or amount_entry.get() == "" or date_entry.get() == "" :
+    if title_entry.get().strip() == "" or amount_entry.get() == "" or date_entry.get().strip() == "" :
             CTkMessagebox(
                 title = "Missing information"
                 , message = "Please fill in all fields"
@@ -49,10 +49,10 @@ def add_expense():
             )
             return
 
-    title = title_entry.get()
+    title = title_entry.get().strip()
     amount = amount_entry.get()
     category = category_combobox.get()
-    date = date_entry.get()
+    date = date_entry.get().strip()
 
     try :
         amount = float(amount)
@@ -178,10 +178,6 @@ def update_expense():
                 , icon = "cancel"
             )
             return
-        title = title_entry.get()
-        amount = amount_entry.get()
-        category = category_combobox.get()
-        date = date_entry.get()
 
         try :
                 amount = float(amount)
@@ -197,7 +193,7 @@ def update_expense():
             return
 
 
-        if title == "" or amount == "" or date == "" :
+        if title_entry.get().strip() == "" or amount == "" or date_entry.get().strip() == "" :
             CTkMessagebox(title = "Missing information" 
                         , text = "Please fill in all fields!" 
                         , icon = "cancel" , justify = "center")
@@ -208,6 +204,11 @@ def update_expense():
                         , text = "Please select the category!" 
                         , icon = "cancel" , justify = "center")
             return
+        title = title_entry.get().strip()
+        amount = amount_entry.get()
+        category = category_combobox.get()
+        date = date_entry.get().strip()
+
 
         cursor.execute("""UPDATE expenses SET title = ?
         , amount = ? , category = ? , date = ? 
