@@ -9,7 +9,7 @@ root = ctk.CTk()
 
 root.title("Expense Tracker")
 
-root.geometry("400x770")
+root.geometry("600x700")
 
 #Project_database
 
@@ -31,6 +31,16 @@ conn.commit()
 
 editing_expense_id = None
 #Project_Funcions
+
+def update_total():
+    cursor.execute("SELECT SUM(amount) FROM expenses")
+
+    total = cursor.fetchone()[0]
+
+    if total is None:
+        total = 0
+
+    total_label.configure(text = f"Total expenses : {format_amount(total)}")
 
 def add_expense():
     if title_entry.get().strip() == "" or amount_entry.get() == "" or date_entry.get().strip() == "" :
@@ -87,7 +97,7 @@ values(? , ? , ? , ?)
                         , "end" 
                         ,iid = str(cursor.lastrowid)
                         , values = (len(expense_tree.get_children()) + 1 
-                        , title , amount , category , date))
+                        , title , format_amount(amount) , category , date))
 
     CTkMessagebox(
         title = "Success" ,
@@ -99,6 +109,7 @@ values(? , ? , ? , ?)
     amount_entry.delete(0, "end")
     date_entry.delete(0 , "end")
     category_combobox.set("Select category")
+    update_total()
 
 def show_expenses():
     cursor.execute("SELECT * FROM expenses")
@@ -107,9 +118,9 @@ def show_expenses():
     for number , expense in enumerate(expenses , start = 1):
         expense_id , title , amount , category , date = expense
         expense_tree.insert("" 
-                            , "end" 
-                            ,iid = str(expense_id) 
-                            , values = [number , title , amount , category , date] )
+            , "end" 
+            ,iid = str(expense_id) 
+            , values = [number , title , format_amount(amount) , category , date] )
 
 def update_row_numbers():
     items = expense_tree.get_children()
@@ -235,9 +246,11 @@ def update_expense():
 
         conn.commit()
 
+        update_total()
+
         current_values = expense_tree.item(str(editing_expense_id) , "values")
 
-        expense_tree.item(str(editing_expense_id) , values = (current_values[0] , title , amount , category , date))
+        expense_tree.item(str(editing_expense_id) , values = (current_values[0] , title , format_amount(amount) , category , date))
         
         CTkMessagebox(
             title = "Success" 
@@ -296,10 +309,18 @@ def delete_expense():
     expense_tree.delete(selected_item[0])
     update_row_numbers()
     selected_row_label.configure(text = "-")
+    update_total()
 
     CTkMessagebox(title = "Success" 
                 , message = "Expense deleted successfully!" 
                 , justify = "center")
+
+def format_amount(amount):
+    try:
+        amount = float(str(amount).replace("$" , "").strip())
+        return f"{amount:g}$"
+    except ValueError:
+        return str(amount)
 
 #Project_widgets
 
@@ -340,44 +361,39 @@ add_button = ctk.CTkButton(root , text = "Add expense" , command = add_expense)
 add_button.grid(row = 4 , column = 1 , padx = 10 , pady = 10 )
 
 
-select_label = ctk.CTkLabel(root , text = "Selected row :")
-select_label.grid(row = 7 , column = 0 , padx = 10 , pady = 10)
-selected_row_label = ctk.CTkLabel(root , text = "-")
-selected_row_label.grid(row = 7 , column = 1 , padx = 10 , pady = 10)
+selected_frame = ctk.CTkFrame(root , fg_color = "transparent")
+selected_frame.grid(row = 7 , column = 0 , padx = 10 , pady = 10)
+select_label = ctk.CTkLabel(selected_frame , text = "Selected row : ")
+select_label.grid(row = 0 , column = 0 , padx = 0)
+selected_row_label = ctk.CTkLabel(selected_frame , text = "-")
+selected_row_label.grid(row = 0 , column = 1 , padx = 5)
+
+total_label = ctk.CTkLabel(root , text = "Total expenses : 0.00")
+total_label.grid(row = 7 , column = 1 , padx =10 , pady = 10)
 
 
-cancel_label = ctk.CTkLabel(root , text = "Cancel selection row : ")
-cancel_label.grid(row = 8 , column = 0 , padx = 10 , pady = 10)
 cancel_button = ctk.CTkButton(root , text = "Cancel selection" , command = cancel_selection)
-cancel_button.grid(row = 8 , column = 1 , padx = 10 , pady = 10)
+cancel_button.grid(row = 8 , column = 0 , padx = 10 , pady = 5)
 
 
-delete_label = ctk.CTkLabel(root , text = "Delete expense : ")
-delete_label.grid(row = 9 , column = 0 , padx = 10 , pady = 10)
 delete_button = ctk.CTkButton(root , text = "Delete expense" , command = delete_expense)
-delete_button.grid(row = 9 , column = 1 , padx = 10 , pady = 10)
+delete_button.grid(row = 8 , column = 1 , padx = 10 , pady = 5)
 
 
-edit_label = ctk.CTkLabel(root , text = "Edit expense : ")
-edit_label.grid(row = 10 , column = 0 , padx = 10 , pady = 10)
 edit_button = ctk.CTkButton(root , text = "Edit expense" , command = edit_expense)
-edit_button.grid(row = 10 , column = 1 , padx = 10 , pady = 10)
+edit_button.grid(row = 9 , column = 0 , padx = 10 , pady = 5)
 
-
-update_label = ctk.CTkLabel(root , text = "Update expense : ")
-update_label.grid(row = 11 , column = 0 , padx = 10 , pady = 10)
 update_button = ctk.CTkButton(root , text = "Update expense" , command = update_expense)
-update_button.grid(row = 11 , column = 1 , padx = 10 , pady = 10)
+update_button.grid(row = 9 , column = 1 , padx = 10 , pady = 5)
 
 
-cancel_edit_label = ctk.CTkLabel(root , text = "Cancel edit : ")
-cancel_edit_label.grid(row = 12 , column = 0 , padx = 10 , pady = 10)
 cancel_edit_button = ctk.CTkButton(root , text = "Cancel edit" , command = cancel_edit)
-cancel_edit_button.grid(row = 12 , column = 1 , padx = 10 , pady = 10)
+cancel_edit_button.grid(row = 10 , column = 0 , columnspan = 2 , padx = 10 , pady = 5)
 
 
 edit_status_label = ctk.CTkLabel(root , text = "")
 edit_status_label.grid(row = 6 , column = 0 , columnspan = 2 , padx = 10 , pady = 5)
+
 
 #Treeview
 columns = ("row" , "Title" , "Amount" , "Category" , "Date")
@@ -402,5 +418,6 @@ expense_tree.grid(row = 5 , columnspan = 2 ,  padx = 10 , pady = 20 , sticky = "
 expense_tree.bind("<<TreeviewSelect>>" , select_expense)
 
 show_expenses()
+update_total()
 
 root.mainloop()
