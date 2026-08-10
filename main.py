@@ -2,6 +2,8 @@ from CTkMessagebox import CTkMessagebox
 import customtkinter as ctk
 import sqlite3
 import tkinter.ttk as ttk
+from datetime import datetime
+
 
 root = ctk.CTk()
 
@@ -54,6 +56,13 @@ def add_expense():
     category = category_combobox.get()
     date = date_entry.get().strip()
 
+    try:
+        datetime.strptime(date , "%Y-%m-%d %I:%M %p")
+    except ValueError :
+        CTkMessagebox(title = "Invalid date"
+                    , message = "Please enter date and time in the format :\n Year-month-day hour:minute AM/PM" 
+                    , icon = "cancel")
+        return
     try :
         amount = float(amount)
     except ValueError :
@@ -174,11 +183,37 @@ def update_expense():
         if editing_expense_id is None :
             CTkMessagebox(
                 title = "Missing selection"
-                , text = "Please select an expense to edit!"
+                , message = "Please select an expense to edit!"
                 , icon = "cancel"
             )
             return
 
+        title = title_entry.get().strip()
+        amount = amount_entry.get()
+        category = category_combobox.get()
+        date = date_entry.get().strip()
+
+        if title_entry.get().strip() == "" or amount == "" or date_entry.get().strip() == "" :
+            CTkMessagebox(title = "Missing information" 
+                        , message = "Please fill in all fields!" 
+                        , icon = "cancel" , justify = "center")
+            return
+
+        if category == "select category" :
+            CTkMessagebox(title = "Missing information" 
+                        , message = "Please select the category!" 
+                        , icon = "cancel" , justify = "center")
+            return
+
+        try:
+            datetime.strptime(date , "%Y-%m-%d %I:%M %p")
+        except ValueError :
+            CTkMessagebox(title = "Invalid date"
+                        , message = "Please enter date and time in the format :\n Year-month-day hour:minute AM/PM" 
+                        , icon = "cancel")
+            return
+
+        
         try :
                 amount = float(amount)
         except ValueError :
@@ -186,28 +221,12 @@ def update_expense():
                         , message = "Pleasr enter a valid number for the amount!"
                         , icon = "cancel")
             return
+
         if amount <= 0 :
-            CTkMessagebox(title = "Invalid amount" 
-                        , message = "Amount must be greater than zero!"
-                        , icon = "cancel")
-            return
-
-
-        if title_entry.get().strip() == "" or amount == "" or date_entry.get().strip() == "" :
-            CTkMessagebox(title = "Missing information" 
-                        , text = "Please fill in all fields!" 
-                        , icon = "cancel" , justify = "center")
-            return
-
-        if category == "select category" :
-            CTkMessagebox(title = "Missing information" 
-                        , text = "Please select the category!" 
-                        , icon = "cancel" , justify = "center")
-            return
-        title = title_entry.get().strip()
-        amount = amount_entry.get()
-        category = category_combobox.get()
-        date = date_entry.get().strip()
+                    CTkMessagebox(title = "Invalid amount" 
+                                , message = "Amount must be greater than zero!"
+                                , icon = "cancel")
+                    return
 
 
         cursor.execute("""UPDATE expenses SET title = ?
@@ -221,8 +240,9 @@ def update_expense():
         expense_tree.item(str(editing_expense_id) , values = (current_values[0] , title , amount , category , date))
         
         CTkMessagebox(
-            title = "Success" , message = "Expense updated successfully!",
-            justify = "center"
+            title = "Success" 
+            ,message = "Expense updated successfully!"
+            ,justify = "center"
         )
 
         edit_status_label.configure(text = "")
@@ -242,7 +262,7 @@ def cancel_edit():
     if editing_expense_id is None : 
         CTkMessagebox(
             title = "No edit"
-            , text = "There is no expense being edited!"
+            , message = "There is no expense being edited!"
             , icon = "cancel"
         )
         return
