@@ -54,6 +54,19 @@ def add_expense():
     category = category_combobox.get()
     date = date_entry.get()
 
+    try :
+        amount = float(amount)
+    except ValueError :
+        CTkMessagebox(title = "Invalid amount"
+            , message = "Please enter a valid number for the amount!"
+            , icon = "cancel")
+        return
+    if amount <= 0 :
+            CTkMessagebox(title = "Invalid amount" 
+                        , message = "Amount must be greater than zero!"
+                        , icon = "cancel")
+            return
+
     cursor.execute("""
 INSERT INTO expenses (title , amount , category , date)
 values(? , ? , ? , ?)
@@ -169,6 +182,20 @@ def update_expense():
         amount = amount_entry.get()
         category = category_combobox.get()
         date = date_entry.get()
+
+        try :
+                amount = float(amount)
+        except ValueError :
+            CTkMessagebox(title = "Invalid amount"
+                        , message = "Pleasr enter a valid number for the amount!"
+                        , icon = "cancel")
+            return
+        if amount <= 0 :
+            CTkMessagebox(title = "Invalid amount" 
+                        , message = "Amount must be greater than zero!"
+                        , icon = "cancel")
+            return
+
 
         if title == "" or amount == "" or date == "" :
             CTkMessagebox(title = "Missing information" 
