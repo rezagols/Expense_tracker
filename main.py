@@ -9,7 +9,7 @@ root = ctk.CTk()
 
 root.title("Expense Tracker")
 
-root.geometry("600x700")
+root.geometry("350x700")
 
 #Project_database
 
@@ -27,9 +27,17 @@ date TEXT
 )
 """)
 
+cursor.execute("""
+    UPDATE expenses
+    SET amount = CAST(REPLACE(amount, '$', '') AS REAL)
+    WHERE typeof(amount) = 'text'
+""")
+
 conn.commit()
 
 editing_expense_id = None
+
+
 #Project_Funcions
 
 def update_total():
@@ -122,6 +130,119 @@ def show_expenses():
             ,iid = str(expense_id) 
             , values = [number , title , format_amount(amount) , category , date] )
 
+def search_expenses():
+    search_text = search_entry.get().strip()
+
+    if search_text == "":
+        CTkMessagebox(
+            title="Missing search",
+            message="Please enter something to search!",
+            icon="cancel",
+            justify="center"
+        )
+        return
+
+    search_text = search_text.replace("$", "").strip()
+
+    amount_operators = [">=", "<=", ">", "<", "="]
+
+    matched_operator = None
+
+    for operator in amount_operators:
+        if search_text.startswith(operator):
+            matched_operator = operator
+            break
+
+    if matched_operator is not None:
+
+        amount_text = search_text[len(matched_operator):].strip()
+
+        try:
+            amount_value = float(amount_text)
+        except ValueError:
+            CTkMessagebox(
+                title="Invalid amount search",
+                message="Please enter a valid amount condition!\n\n"
+                        "Examples:\n"
+                        ">30\n"
+                        "<50\n"
+                        ">=100\n"
+                        "<=20\n"
+                        "=25",
+                icon="cancel",
+                justify="center"
+            )
+            return
+
+        if matched_operator == ">":
+            query = "SELECT * FROM expenses WHERE amount > ?"
+
+        elif matched_operator == "<":
+            query = "SELECT * FROM expenses WHERE amount < ?"
+
+        elif matched_operator == ">=":
+            query = "SELECT * FROM expenses WHERE amount >= ?"
+
+        elif matched_operator == "<=":
+            query = "SELECT * FROM expenses WHERE amount <= ?"
+
+        else:
+            query = "SELECT * FROM expenses WHERE amount = ?"
+
+        cursor.execute(query, (amount_value,))
+
+    else:
+
+
+        search_pattern = f"%{search_text}%"
+
+        cursor.execute("""
+            SELECT *
+            FROM expenses
+            WHERE LOWER(title) LIKE LOWER(?)
+            OR LOWER(CAST(amount AS TEXT)) LIKE LOWER(?)
+            OR LOWER(category) LIKE LOWER(?)
+            OR LOWER(date) LIKE LOWER(?)
+        """, (
+            search_pattern,
+            search_pattern,
+            search_pattern,
+            search_pattern
+        ))
+
+    expenses = cursor.fetchall()
+
+
+    for item in expense_tree.get_children():
+        expense_tree.delete(item)
+
+
+    for number, expense in enumerate(expenses, start=1):
+
+        expense_id, title, amount, category, date = expense
+
+        expense_tree.insert(
+            "",
+            "end",
+            iid=str(expense_id),
+            values=(
+                number,
+                title,
+                format_amount(amount),
+                category,
+                date
+            )
+        )
+
+
+def cancel_search():
+    search_entry.delete(0 , "end")
+
+    for item in expense_tree.get_children():
+        expense_tree.delete(item)
+
+    show_expenses()
+
 def update_row_numbers():
     items = expense_tree.get_children()
 
@@ -194,7 +315,7 @@ def update_expense():
         if editing_expense_id is None :
             CTkMessagebox(
                 title = "Missing selection"
-                , message = "Please select an expense to edit!"
+                , message = "Please select an expense to update!"
                 , icon = "cancel"
             )
             return
@@ -362,38 +483,49 @@ add_button.grid(row = 4 , column = 1 , padx = 10 , pady = 10 )
 
 
 selected_frame = ctk.CTkFrame(root , fg_color = "transparent")
-selected_frame.grid(row = 7 , column = 0 , padx = 10 , pady = 10)
+selected_frame.grid(row = 8 , column = 0 , padx = 10 , pady = 10)
 select_label = ctk.CTkLabel(selected_frame , text = "Selected row : ")
 select_label.grid(row = 0 , column = 0 , padx = 0)
 selected_row_label = ctk.CTkLabel(selected_frame , text = "-")
 selected_row_label.grid(row = 0 , column = 1 , padx = 5)
 
 total_label = ctk.CTkLabel(root , text = "Total expenses : 0.00")
-total_label.grid(row = 7 , column = 1 , padx =10 , pady = 10)
+total_label.grid(row = 8 , column = 1 , padx =10 , pady = 10)
 
 
 cancel_button = ctk.CTkButton(root , text = "Cancel selection" , command = cancel_selection)
-cancel_button.grid(row = 8 , column = 0 , padx = 10 , pady = 5)
+cancel_button.grid(row = 9 , column = 0 , padx = 10 , pady = 5)
 
 
 delete_button = ctk.CTkButton(root , text = "Delete expense" , command = delete_expense)
-delete_button.grid(row = 8 , column = 1 , padx = 10 , pady = 5)
+delete_button.grid(row = 9 , column = 1 , padx = 10 , pady = 5)
 
 
 edit_button = ctk.CTkButton(root , text = "Edit expense" , command = edit_expense)
-edit_button.grid(row = 9 , column = 0 , padx = 10 , pady = 5)
+edit_button.grid(row = 10 , column = 0 , padx = 10 , pady = 5)
 
 update_button = ctk.CTkButton(root , text = "Update expense" , command = update_expense)
-update_button.grid(row = 9 , column = 1 , padx = 10 , pady = 5)
+update_button.grid(row = 10 , column = 1 , padx = 10 , pady = 5)
 
 
 cancel_edit_button = ctk.CTkButton(root , text = "Cancel edit" , command = cancel_edit)
-cancel_edit_button.grid(row = 10 , column = 0 , columnspan = 2 , padx = 10 , pady = 5)
+cancel_edit_button.grid(row = 11 , column = 0 , columnspan = 2 , padx = 10 , pady = 5)
 
 
 edit_status_label = ctk.CTkLabel(root , text = "")
-edit_status_label.grid(row = 6 , column = 0 , columnspan = 2 , padx = 10 , pady = 5)
+edit_status_label.grid(row = 7 , column = 0 , columnspan = 2 , padx = 10 , pady = 5)
 
+
+search_label = ctk.CTkLabel(root , text = "Search expense : ")
+search_label.grid(row = 4 , column = 0 , padx = 0 , pady = 10)
+search_entry = ctk.CTkEntry(root)
+search_entry.grid(row = 4 , column = 1 , padx = 10 , pady = 10)
+search_button = ctk.CTkButton(root , text = "Search" , command = search_expenses)
+search_button.grid(row = 5 , column = 1 , padx = 10 , pady = 10)
+
+
+cancel_search_button = ctk.CTkButton(root , text = "Cancel search" , command = cancel_search)
+cancel_search_button.grid(row = 5 , column = 0 , padx = 10 , pady = 10)
 
 #Treeview
 columns = ("row" , "Title" , "Amount" , "Category" , "Date")
@@ -414,7 +546,7 @@ expense_tree.column("Category" , width = 100)
 expense_tree.column("Date" , width = 90)
 
 
-expense_tree.grid(row = 5 , columnspan = 2 ,  padx = 10 , pady = 20 , sticky = "W")
+expense_tree.grid(row = 6 , columnspan = 2 ,  padx = 10 , pady = 20 , sticky = "W")
 expense_tree.bind("<<TreeviewSelect>>" , select_expense)
 
 show_expenses()
